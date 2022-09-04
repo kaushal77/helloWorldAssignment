@@ -5,7 +5,7 @@ import Item from './Item';
 
 
 function Home() {
-  const [pageNumberLimit,setpageNumberLimit] = useState(5);
+  const [pageNumberLimit,setpageNumberLimit] = useState(10);
   const [skip,setSkip] = useState(0);
   const [itemData, setItemData] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -17,14 +17,16 @@ function Home() {
   const listInnerRef = useRef();
 
   
-
+  
   
   // useEffect(() => {
   //       fetchData();
       
   // }, [skip])
-  const fetchData = ()=>{
-    axios.get(`https://dummyjson.com/products?skip=${skip}&limit=${pageNumberLimit}`
+  const fetchData = async()=>{
+    setLoading(true);
+
+    await axios.get(`https://dummyjson.com/products?skip=${skip}&limit=${pageNumberLimit}`
     ).then((res)=>{
       console.log(res);
       // if (!res.data.products.length) {
@@ -37,15 +39,21 @@ function Home() {
       {
         setItemData([...new Set([...itemData,...res.data.products])]);
       }
+      setTimeout(()=>{
+        setLoading(false);
+      },1000);
+      
       
     }
-  )}
+  )
+  
+}
   
 
   const handleScroll = ()=>{
-    console.log("inside handlescroll");
-    // let scrolHeight = window.innerHeight + window.screenY;
-    let bottomHeight = document.documentElement.offsetHeight;
+    // console.log("inside handlescroll");
+    let totalUserScrollHeight = window.innerHeight + Math.ceil(window.pageYOffset) -30 ;
+    // let bottomHeight = document.documentElement.offsetHeight;
 
     // if(scrollHeight >= bottomHeight)
     // {
@@ -53,14 +61,22 @@ function Home() {
     //   fetchData();
     // }
     if (listInnerRef.current) {
-      console.log(listInnerRef.current)
+      // console.log(listInnerRef.current)
       const { scrollTop, scrollHeight, clientHeight } = listInnerRef.current;
-      console.log(scrollTop, scrollHeight, clientHeight,bottomHeight);
-      if (scrollTop + clientHeight === scrollHeight) {
-        setCurrPage(currPage => currPage + 1);
-        setSkip(skip => skip +5);
+      let scrollingHeight = scrollHeight -30;
+      // console.log(scrollTop, scrollHeight, clientHeight,bottomHeight,window.pageYOffset,window.innerHeight , window.screenY);
+      if (totalUserScrollHeight === scrollingHeight) {
+        // let updatedSkip = updatedSkip + skip + pageNumberLimit;
+        if(pageNumberLimit != 5)
+        {
+           setpageNumberLimit(prev=>prev -5);
+           console.log('limit=',pageNumberLimit)
+        }
+        
+        setSkip(prev => prev + pageNumberLimit);
         // console.log(skip)
-        // setpageNumberLimit(pageNumberLimit=>pageNumberLimit+10);
+        
+        
         // fetchData();
         // This will be triggered after hitting the last element.
         // API call should be made here while implementing pagination.
@@ -69,26 +85,26 @@ function Home() {
   }
 
   useEffect(()=>{
-    fetchData();
+    // fetchData();
     window.addEventListener('scroll',handleScroll);
-    setLoading(false);
+    
   },[])
 
   useEffect(()=>{
     console.log(skip)
-    
+      
       fetchData();
     
-    console.log(skip)
+    console.log('skip = ',skip)
   },[skip])
 
   return (
-    <div style={{display: 'flex',justifyContent: 'space-evenly',flexWrap: 'wrap'}} ref={listInnerRef} >
+    <div style={{display: 'flex',justifyContent: 'space-evenly',flexWrap: 'wrap'}} ref={listInnerRef}  >
       {console.log(itemData)}
       {(itemData) ? (itemData.map((x)=>{
-      return <Item val = {x} key={x.id} /> })) : <p>No data found</p>
-      
+      return <Item val = {x} key={x.title}  /> })) : <p>No data found</p>
       }
+      {loading && <p style={{margin:'20px'}}>loading....</p>}
     <section>
         {/* <img src={require('../assets/Eden_logo.PNG')} alt="" style={{width:'100px', padding:'10px 0px',margin:'5% 0px 3% 0px'}} /> */}
         
